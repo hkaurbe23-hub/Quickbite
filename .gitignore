@@ -1,0 +1,12 @@
+# Root gitignore
+
+node_modules/
+.env
+
+Admin/node_modules/
+Frontend/node_modules/
+Backend/node_modules/
+
+Admin/dist/
+Frontend/dist/
+Backend/dist/

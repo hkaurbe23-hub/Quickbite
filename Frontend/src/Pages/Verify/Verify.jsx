@@ -1,34 +1,24 @@
-import React, { useContext, useEffect } from 'react'
-import styles from './verify.module.css'
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { StoreContext } from '../../context/StoreContext'
-import axios from 'axios';
+import React, { useEffect } from 'react';
+import styles from './verify.module.css';
+import { useNavigate } from 'react-router-dom';
 
 const Verify = () => {
-    const [searchParams, setSearchParams]= useSearchParams();
-    const success = searchParams.get("success")
-    const orderId = searchParams.get("orderId")
-    const {URl} = useContext(StoreContext)
-    const navigate = useNavigate()
 
-    const verifyPayment = async () =>{
-        const response = await axios.post(URl+"/api/order/verify",{success, orderId})
-        if(response.data.success){
-            navigate("/myorders")
-        } else{
-            navigate("/")
-        }
-    }
+    const navigate = useNavigate();
 
-    useEffect(()=> {
-        verifyPayment()
-    },[])
+    useEffect(() => {
+        // Fake payment verification delay for demo
+        setTimeout(() => {
+            navigate("/myorders");
+        }, 1000);
+    }, []);
 
-  return (
-    <div className={styles.verify}>
-      <div className={styles.spinner}></div>
-    </div>
-  )
-}
+    return (
+        <div className={styles.verify}>
+            <div className={styles.spinner}></div>
+            <p style={{ color: "white", marginTop: "20px" }}>Processing your order...</p>
+        </div>
+    );
+};
 
-export default Verify
+export default Verify;

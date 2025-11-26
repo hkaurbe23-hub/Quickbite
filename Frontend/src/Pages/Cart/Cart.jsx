@@ -1,10 +1,12 @@
 import React, { useContext } from "react";
 import style from "./cart.module.css";
 import { StoreContext } from "../../context/StoreContext";
+import URl from "../../config";   // ✅ FIXED (import URL correctly)
 import { useNavigate } from 'react-router-dom';
 
 const Cart = () => {
-  const { cartItem, food_list, removeFromCart, getTotalCartAmount , URl} = useContext(StoreContext);
+  const { cartItems, food_list, removeFromCart, getTotalCartAmount } = useContext(StoreContext); 
+  // ✅ FIXED cartItems (was cartItem)
 
   const navigate = useNavigate();
 
@@ -21,22 +23,18 @@ const Cart = () => {
         </div>
         <br />
         <hr />
+
         {food_list.map((item, index) => {
-          if (cartItem[item._id] > 0) {
+          if (cartItems[item._id] > 0) {   // ✅ FIXED (was cartItem)
             return (
-              <div>
-                <div
-                  className={`${style.CartItemsTitle} ${style.CartItemsItem}`}
-                >
-                  <img src={URl+"/images/"+item.image} alt="" />
+              <div key={index}>
+                <div className={`${style.CartItemsTitle} ${style.CartItemsItem}`}>
+                  <img src={`${URl}/images/${item.image}`} alt="" />  {/* ✅ FIXED URL */}
                   <p>{item.name}</p>
                   <p>${item.price}</p>
-                  <p>{cartItem[item._id]}</p>
-                  <p>${item.price * cartItem[item._id]}</p>
-                  <p
-                    className={style.Cross}
-                    onClick={() => removeFromCart(item._id)}
-                  >
+                  <p>{cartItems[item._id]}</p>  {/* ✅ FIXED */}
+                  <p>${item.price * cartItems[item._id]}</p>
+                  <p className={style.Cross} onClick={() => removeFromCart(item._id)}>
                     x
                   </p>
                 </div>
@@ -46,6 +44,7 @@ const Cart = () => {
           }
         })}
       </div>
+
       <div className={style.CartBottom}>
         <div className={style.CartTotal}>
           <h2>Cart Total</h2>
@@ -57,16 +56,17 @@ const Cart = () => {
             <hr />
             <div className={style.CartTotalDetails}>
               <p>Delivery Fee</p>
-              <p>${getTotalCartAmount()===0?0:5}</p> 
-            </div> 
+              <p>${getTotalCartAmount() === 0 ? 0 : 5}</p>
+            </div>
             <hr />
             <div className={style.CartTotalDetails}>
               <b>Total</b>
-              <b>${getTotalCartAmount()===0?0:getTotalCartAmount()+5}</b>
+              <b>${getTotalCartAmount() === 0 ? 0 : getTotalCartAmount() + 5}</b>
             </div>
           </div>
-          <button onClick={()=>navigate('/placeorder')}>Checkout</button>
+          <button onClick={() => navigate('/placeorder')}>Checkout</button>
         </div>
+
         <div className={style.CartPromoCode}>
           <div>
             <p>If you have promo code then add here</p>
@@ -76,6 +76,7 @@ const Cart = () => {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

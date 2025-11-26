@@ -1,49 +1,48 @@
+import URl from "../../config";
 import React, { useContext, useState } from "react";
 import style from "./loginPopUp.module.css";
 import { assets } from "../../assets/assets";
 import { StoreContext } from "../../context/StoreContext";
-import axios from "axios"
+import axios from "axios";
 
 const LoginPopUp = ({ setShowLogin }) => {
   const [currState, setCurrState] = useState("Login");
 
-
-  const { URl, setToken } = useContext(StoreContext)
+  const { setToken } = useContext(StoreContext); // ❗ FIXED — removed URl from here
 
   const [data, setData] = useState({
     name: "",
     email: "",
     password: ""
-  })
+  });
 
   const onChangehandler = (event) => {
-    const name = event.target.name
+    const name = event.target.name;
     const value = event.target.value;
-    setData(data => ({ ...data, [name]: value }))
-  }
+    setData((data) => ({ ...data, [name]: value }));
+  };
 
   const onLogin = async (event) => {
     event.preventDefault();
 
-    let newURl = URl
+    let newURl = URl;   // ✔ this now works because it comes from config.js
 
     if (currState === "Login") {
-      newURl += "/api/user/login"
+      newURl += "/api/user/login";
     } else {
-      newURl += "/api/user/register"
+      newURl += "/api/user/register";
     }
 
-    const response = await axios.post(newURl, data)
+    const response = await axios.post(newURl, data);
 
     if (response.data.success) {
-      setToken(response.data.token)
-      localStorage.setItem("token", response.data.token)
-      setShowLogin(false)
+      setToken(response.data.token);
+      localStorage.setItem("token", response.data.token);
+      setShowLogin(false);
     } else {
-      alert(response.data.message)
+      alert(response.data.message);
     }
-
-  }
+  };
 
   return (
     <div className={style.LoginPopUp}>
@@ -59,26 +58,51 @@ const LoginPopUp = ({ setShowLogin }) => {
           />
         </div>
         <div className={style.LoginPopUpInputs}>
-          {currState === "Login" ? (
-            <></>
-          ) : (
-            <input type="text" name="name" onChange={onChangehandler} value={data.name} placeholder="Your Name" required />
+          {currState === "Login" ? null : (
+            <input
+              type="text"
+              name="name"
+              onChange={onChangehandler}
+              value={data.name}
+              placeholder="Your Name"
+              required
+            />
           )}
-          <input type="email" placeholder="Your Email" name="email" onChange={onChangehandler} value={data.email} required />
-          <input type="password" placeholder="Your Password" name="password" onChange={onChangehandler} value={data.password} required />
+          <input
+            type="email"
+            placeholder="Your Email"
+            name="email"
+            onChange={onChangehandler}
+            value={data.email}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Your Password"
+            name="password"
+            onChange={onChangehandler}
+            value={data.password}
+            required
+          />
         </div>
-        <button type="submit">{currState === "Sign Up" ? "Create Account" : "Login"}</button>
+        <button type="submit">
+          {currState === "Sign Up" ? "Create Account" : "Login"}
+        </button>
         <div className={style.LoginPopUpConditon}>
           <input type="Checkbox" required />
           <p>I agree to the terms and conditions</p>
         </div>
         {currState === "Login" ? (
           <p>
-            If you don't have an account, <span onClick={() => setCurrState("Sign Up")}>Click Here To Create</span>
+            If you don't have an account,{" "}
+            <span onClick={() => setCurrState("Sign Up")}>
+              Click Here To Create
+            </span>
           </p>
         ) : (
           <p>
-            Already Have an Account? <span onClick={() => setCurrState("Login")}>Login Here</span>
+            Already Have an Account?{" "}
+            <span onClick={() => setCurrState("Login")}>Login Here</span>
           </p>
         )}
       </form>

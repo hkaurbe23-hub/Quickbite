@@ -1,113 +1,132 @@
 import orderModel from "../models/orderModel.js";
-import userModel from "../models/userModel.js"
-import Stripe from 'stripe'
+import userModel from "../models/userModel.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+// ================================
+// PLACE ORDER (DEMO MODE)
+// ================================
+const placeOrder = async (req, res) => {
+    try {
+        // ⭐ FIX: ensure req.user exists (admin routes do NOT use token)
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.json({ success: false, message: "User not authorized" });
+        }
 
-// Placing user order
-const placeOrder = async (req,res) => {
-
-    const frontend_url = "http://localhost:5174"
-
-    try{
-        const newOrder = new orderModel({
-            userId: req.body.userId,
+        // 1. CREATE ORDER
+        const newOrder = await orderModel.create({
+            userId: userId,
             items: req.body.items,
             amount: req.body.amount,
-            address: req.body.address
-        })
+            address: req.body.address,
+            status: "Food is Getting Ready!",  // Default status
+            payment: true                      // Fake payment success
+        });
 
-        await newOrder.save()
-        await userModel.findByIdAndUpdate(req.body.userId,{cartData:{}})
+        // 2. CLEAR USER CART
+        await userModel.findByIdAndUpdate(userId, {
+            cartData: {}
+        });
 
-        const line_items = req.body.items.map((item)=> ({
-            price_data: {
-                currency: "INR",
-                product_data: {
-                    name: item.name
-                },
-                unit_amount: item.price*100*80
-            },
-            quantity: item.quantity
-        }))
+        // 3. SEND RESPONSE
+        return res.json({
+            success: true,
+            message: "Order placed successfully",
+            orderId: newOrder._id
+        });
 
-        line_items.push({
-            price_data:{
-                currency: "INR",
-                product_data:{
-                    name:"Delivery Charges"
-                },
-                unit_amount: 5*100*80
-            },
-            quantity: 1
-        })
-
-       
-        const session = await stripe.checkout.sessions.create({
-            line_items: line_items,
-            mode:'payment',
-            success_url: `${frontend_url}/verify?success=true&orderId=${newOrder._id}`,
-            cancel_url: `${frontend_url}/verify?success=false&orderId=${newOrder._id}`,
-        })
-
-        res.json({success:true, session_url:session.url})
-    } catch(error){
-        console.log(error)
-        res.json({success: false,message: error})
-    }
-}
-
-const verifyOrder = async (req, res)=>{
-    const {orderId, success} = req.body;
-    try {
-        if (success==="true") {
-            await orderModel.findByIdAndUpdate(orderId, {payment:true})
-            res.json({success: true, message: "Paid"})
-        } else {
-            await orderModel.findByIdAndDelete(orderId);
-            res.json({success: false, message: "Not Paid"})
-        }
     } catch (error) {
         console.log(error);
-        res.json({success: false, message: "Error"})
+        res.json({ success: false, message: "Error placing order" });
     }
-}
+};
 
-// user Orders for frontend
+// ================================
+// VERIFY ORDER (DEMO MODE)
+// ================================
+const verifyOrder = async (req, res) => {
+    try {
+        // Demo mode → always successful
+        return res.json({
+            success: true,
+            message: "Payment Verified"
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: "Verification Error" });
+    }
+};
+
+// ================================
+// USER ORDERS FOR FRONTEND
+// ================================
 const userOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find({userId: req.body.userId})
-        res.json({success: true, data: orders})
+        // ⭐ Use user from token
+        const userId = req.user?.id;
+
+        const orders = await orderModel.find({ userId: userId });
+        res.json({ success: true, data: orders });
 
     } catch (error) {
         console.log(error);
-        res.json({success: false, message: "Error"})
+        res.json({ success: false, message: "Error fetching user orders" });
     }
-}
+};
 
-
-// All orders for Admin
+// ================================
+// ALL ORDERS FOR ADMIN PANEL
+// ================================
 const listOrders = async (req, res) => {
     try {
-        const orders = await orderModel.find({})
-        res.json({success: true, data:orders})
+        const orders = await orderModel.find({});
+        res.json({ success: true, data: orders });
+
     } catch (error) {
-        console.log(error)
-        res.json({success: false, message:"Error"})
+        console.log(error);
+        res.json({ success: false, message: "Error fetching orders" });
     }
-}
+};
 
-
-// Update Order Status
+// ================================
+// UPDATE ORDER STATUS (ADMIN)
+// ================================
 const updateStatus = async (req, res) => {
     try {
-        await orderModel.findByIdAndUpdate(req.body.orderId,{status:req.body.status})
-        res.json({success: true,message: "Status Updated!"})
-    } catch (error) {
-            console.log(error);
-            res.json({success:false,message: "Error"})
-            
-    }
-}
+        await orderModel.findByIdAndUpdate(req.body.orderId, {
+            status: req.body.status
+        });
 
-export { placeOrder, verifyOrder, userOrders, updateStatus, listOrders }
+        res.json({
+            success: true,
+            message: "Status Updated!"
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: "Error updating status" });
+    }
+};
+
+// ================================
+// GET MY ORDERS (GET endpoint)
+// ================================
+const myOrders = async (req, res) => {
+    try {
+        // Use user from token
+        const userId = req.user?.id;
+        
+        if (!userId) {
+            return res.json({ success: false, message: "User not authorized" });
+        }
+
+        const orders = await orderModel.find({ userId: userId }).sort({ date: -1 });
+        res.json({ success: true, data: orders });
+
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: "Error fetching user orders" });
+    }
+};
+
+export { placeOrder, verifyOrder, userOrders, updateStatus, listOrders, myOrders };
